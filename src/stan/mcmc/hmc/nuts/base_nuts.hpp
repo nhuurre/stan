@@ -279,16 +279,10 @@ class base_nuts : public base_hmc<Model, Hamiltonian, Integrator, BaseRNG> {
       log_sum_weight = math::log_sum_exp(log_sum_weight, H0 - h);
 
       // Add acceptance statistic of new state to running sum
-      // a += e^{-H(q_n, p_n)} max(1, e^{H(q_0 - p_0) - H(q_n, p_n)})
-      if (H0 - h > 0) {
-        // Saturated Metropolis accept probability with Boltzman weight
-        log_sum_accept_stat
-            = math::log_sum_exp(log_sum_accept_stat, (H0 - h) + 0);
-      } else {
-        // Unsaturated Metropolis accept probability with Boltzman weight
-        log_sum_accept_stat
-            = math::log_sum_exp(log_sum_accept_stat, (H0 - h) + (H0 - h));
-      }
+      // a += e^{-H(q_n, p_n)} 2/(1 + e^{|H(q_0, p_0) - H(q_n, p_n)|})
+      log_sum_accept_stat = math::log_sum_exp(
+          log_sum_accept_stat,
+          (H0 - h) + std::log(2) - math::log1p_exp(std::abs(H0 - h)));
 
       z_propose = this->z_;
 
